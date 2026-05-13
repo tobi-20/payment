@@ -1,0 +1,6 @@
+ALTER TABLE payments
+ADD COLUMN authorized_expires_at TIMESTAMPTZ,
+ADD COLUMN authorized_at TIMESTAMPTZ,
+ADD COLUMN captured_at TIMESTAMPTZ,
+ADD COLUMN voided_at TIMESTAMPTZ,
+ADD COLUMN refunded_at TIMESTAMPTZ;
