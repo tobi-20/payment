@@ -1,7 +1,9 @@
+import { Money } from '../application/mapper/payment.mapper';
+
 export type createPaymentsParams = {
   orderId: string;
   customerId: string;
-  amount: number;
+  amount: Money;
 };
 export type BankAuthorizeUpdateParams = {
   id: string;
@@ -43,4 +45,14 @@ export type SaveIdempotencyParams = {
   operation: string;
   response?: string;
   paymentId: string;
+};
+
+export type IdempotencyKeyRow = {
+  key: string;
+  date_created: string;
+  operation: string;
+  payment_id: string;
+  updated_at: string;
+  response?: string;
+  date_expired?: string;
 };

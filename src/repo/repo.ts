@@ -4,6 +4,7 @@ import {
   BankRefundParams,
   BankVoidParams,
   createPaymentsParams,
+  IdempotencyKeyRow,
   Payment,
   SaveIdempotencyParams,
 } from './types';
@@ -68,7 +69,9 @@ export async function GetPaymentByCustomerId(
   return result.rows;
 }
 
-export async function SaveIdempotencyKey(params: SaveIdempotencyParams) {
+export async function SaveIdempotencyKey(
+  params: SaveIdempotencyParams,
+): Promise<IdempotencyKeyRow> {
   const sql = `INSERT INTO idempotency_keys (keys, operation, response, payment_id) VALUES ($1, $2, $3, $4) RETURNING keys, date_created, operation, payment_id, updated_at, response, date_expired`;
   const result = await pool.query(sql, [
     params.key,

@@ -1,3 +1,4 @@
+import { AppError } from '../errors/errors';
 import { AuthorizeParams, AuthorizePaymentReturn } from './types';
 
 export async function authorizePayment(
@@ -17,6 +18,16 @@ export async function authorizePayment(
       expiry_year: parseInt(params.expiryYear),
     }),
   });
-  const result = await response.json();
+  let result;
+  try {
+    result = await response.json();
+  } catch {
+    throw new AppError('Invalid server response', 502);
+  }
+
+  //failure case
+  if (!response.ok) {
+    throw new AppError(result?.message ?? '', response.status);
+  }
   return result;
 }
