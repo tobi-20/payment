@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from 'express';
 
-import { Order } from '../domain/types';
+import { Order } from '../domain/order.domain';
 
 export function createPaymentHandler(
   req: Request,
