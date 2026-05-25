@@ -20,6 +20,7 @@ type RawOrder = {
   expiryMonth: number;
   expiryYear: number;
 };
+
 type CVVError = 'Invalid CVV';
 class CVV {
   private constructor(public readonly value: string) {}
@@ -121,11 +122,8 @@ class Money {
 type ExpiryDateError =
   | 'Invalid expiry month'
   | 'Invalid expiry year'
-  | 'Card expired'
-  | ('Invalid expiry month' & 'Invalid expiry year')
-  | ('Card expired' & 'Invalid expiry month')
-  | ('Card expired' & 'Invalid expiry year')
-  | ('Card expired' & 'Invalid expiry month' & 'Invalid expiry year');
+  | 'Card expired';
+
 class ExpiryDate {
   private constructor(
     public readonly month: number,
@@ -158,31 +156,22 @@ type PaymentMethodError =
   | 'Invalid CVV'
   | 'Invalid card number'
   | ('Invalid expiry month' | 'Invalid expiry year' | 'Card expired');
-class PaymentMethod {
-  private constructor(
-    public readonly cardNumber: CardNumber,
-    public readonly cvv: CVV,
-    public readonly expiry: ExpiryDate,
-  ) {}
 
-  static create(input: {
-    cardNumber: string;
-    cvv: string;
-    expiryMonth: number;
-    expiryYear: number;
-  }): Result<PaymentMethod, PaymentMethodError> {
-    const cardNumber = CardNumber.create(input.cardNumber);
-    if (!cardNumber.ok) return cardNumber;
-    const cvv = CVV.create(input.cardNumber);
-    if (!cvv.ok) return cvv;
-    const expiryDate = ExpiryDate.create(input.expiryMonth, input.expiryYear);
-    if (!expiryDate.ok) return expiryDate;
-    return {
-      ok: true,
-      value: new PaymentMethod(cardNumber.value, cvv.value, expiryDate.value),
-    };
-  }
-}
+//   class PaymentMethod {
+//   private constructor(
+//     public readonly cardNumber: CardNumber,
+//     public readonly cvv: CVV,
+//     public readonly expiry: ExpiryDate,
+//   ) {}
+
+//   static create(input: {
+//     cardNumber: CardNumber;
+//     cvv: CVV;
+//     expiryDate: ExpiryDate;
+//   }): PaymentMethod {
+//     return new PaymentMethod(input.cardNumber, input.cvv, input.expiryDate);
+//   }
+// }
 
 type OrderError =
   | PaymentMethodError
@@ -195,11 +184,14 @@ export class Order {
     public readonly orderId: OrderId,
     public readonly customerId: CustomerId,
     public readonly amount: Money,
-    public readonly payment: PaymentMethod,
+    public readonly cvv: CVV,
+    public readonly expiryDate: ExpiryDate,
+    public readonly cardNumber: CardNumber,
     public readonly idempotencyKey: IdempotencyKey,
   ) {}
 
   static create(input: RawOrder): Result<Order, OrderError> {
+    //translate DTO to domain objects
     const orderId = OrderId.create(input.orderId);
     if (!orderId.ok) return orderId;
 
@@ -208,17 +200,19 @@ export class Order {
 
     const amount = Money.create(input.amount);
     if (!amount.ok) return amount;
+    const cardNumber = CardNumber.create(input.cardNumber);
+    if (!cardNumber.ok) return cardNumber;
 
-    const payment = PaymentMethod.create({
-      cardNumber: input.cardNumber,
-      cvv: input.cvv,
-      expiryMonth: input.expiryMonth,
-      expiryYear: input.expiryYear,
-    });
-    if (!payment.ok) return payment;
+    const cvv = CVV.create(input.cvv);
+    if (!cvv.ok) return cvv;
+
+    const expiryDate = ExpiryDate.create(input.expiryMonth, input.expiryYear);
+    if (!expiryDate.ok) return expiryDate;
 
     const idempotencyKey = IdempotencyKey.create(input.idempotencyKey);
     if (!idempotencyKey.ok) return idempotencyKey;
+
+    //Grouping related objects
 
     return {
       ok: true,
@@ -226,7 +220,9 @@ export class Order {
         orderId.value,
         customerId.value,
         amount.value,
-        payment.value,
+        cvv.value,
+        expiryDate.value,
+        cardNumber.value,
         idempotencyKey.value,
       ),
     };
